@@ -1,0 +1,117 @@
+CIPMFDTI(
+  (drug_extractor): MolecularGCN(
+    (init_transform): Linear(in_features=75, out_features=128, bias=False)
+    (gnn): GCN(
+      (gnn_layers): ModuleList(
+        (0-2): 3 x GCNLayer(
+          (graph_conv): GraphConv(in=128, out=128, normalization=none, activation=<function relu at 0x000001BBBF0DEB80>)
+          (dropout): Dropout(p=0.0, inplace=False)
+          (res_connection): Linear(in_features=128, out_features=128, bias=True)
+          (bn_layer): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+      )
+    )
+  )
+  (protein_extractor): ProteinCNN(
+    (embedding): Embedding(26, 128, padding_idx=0)
+    (conv1): Conv1d(128, 128, kernel_size=(3,), stride=(1,))
+    (bn1): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (conv2): Conv1d(128, 128, kernel_size=(6,), stride=(1,))
+    (bn2): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (conv3): Conv1d(128, 128, kernel_size=(9,), stride=(1,))
+    (bn3): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+  (attn_drug): MultiHeadSelfAttention(
+    (W_q): Linear(in_features=128, out_features=128, bias=False)
+    (W_k): Linear(in_features=128, out_features=128, bias=False)
+    (W_v): Linear(in_features=128, out_features=128, bias=False)
+    (q_proj): Linear(in_features=128, out_features=128, bias=False)
+    (k_proj): Linear(in_features=128, out_features=128, bias=False)
+    (v_proj): Linear(in_features=128, out_features=128, bias=False)
+    (out_proj): Linear(in_features=128, out_features=128, bias=False)
+  )
+  (mlp_classifier): MLPDecoder(
+    (fc1): Linear(in_features=256, out_features=512, bias=True)
+    (bn1): BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (fc2): Linear(in_features=512, out_features=512, bias=True)
+    (bn2): BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (fc3): Linear(in_features=512, out_features=128, bias=True)
+    (bn3): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (fc4): Linear(in_features=128, out_features=1, bias=True)
+  )
+  (gau): GAU(
+    (norm): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+    (dropout): Dropout(p=0.0, inplace=False)
+    (to_hidden): Sequential(
+      (0): Linear(in_features=128, out_features=512, bias=True)
+      (1): SiLU()
+    )
+    (to_qk): Sequential(
+      (0): Linear(in_features=128, out_features=128, bias=True)
+      (1): SiLU()
+    )
+    (to_out): Sequential(
+      (0): Linear(in_features=256, out_features=128, bias=True)
+      (1): Dropout(p=0.0, inplace=False)
+    )
+  )
+  (feature_enhancer): BiAttentionBlock(
+    (layer_norm_v): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+    (layer_norm_l): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+    (attn): BiMultiHeadAttention(
+      (v_proj): Linear(in_features=128, out_features=256, bias=True)
+      (l_proj): Linear(in_features=128, out_features=256, bias=True)
+      (values_v_proj): Linear(in_features=128, out_features=256, bias=True)
+      (values_l_proj): Linear(in_features=128, out_features=256, bias=True)
+      (out_v_proj): Linear(in_features=256, out_features=128, bias=True)
+      (out_l_proj): Linear(in_features=256, out_features=128, bias=True)
+    )
+    (drop_path): Identity()
+  )
+  (gl): VisualAwarePromptingModule(
+    (prompt): Prompt(
+      (self_attention): MultiheadAttention(
+        (out_proj): NonDynamicallyQuantizableLinear(in_features=128, out_features=128, bias=True)
+      )
+      (model): Sequential(
+        (0): Linear(in_features=128, out_features=128, bias=True)
+        (1): ReLU()
+        (2): Dropout(p=0.1, inplace=False)
+        (3): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+        (4): Linear(in_features=128, out_features=128, bias=True)
+      )
+    )
+    (gated_fusion): GatedFusion(
+      (Ws): Linear(in_features=128, out_features=128, bias=True)
+      (Wv): Linear(in_features=128, out_features=128, bias=True)
+      (sigmoid): Sigmoid()
+      (ffn): Sequential(
+        (0): Linear(in_features=128, out_features=128, bias=True)
+        (1): ReLU()
+        (2): Dropout(p=0.1, inplace=False)
+        (3): Linear(in_features=128, out_features=128, bias=True)
+      )
+    )
+    (resampler): Resampler(
+      (cross_attention): MultiheadAttention(
+        (out_proj): NonDynamicallyQuantizableLinear(in_features=128, out_features=128, bias=True)
+      )
+      (ffn): Sequential(
+        (0): Linear(in_features=128, out_features=128, bias=True)
+        (1): ReLU()
+        (2): Dropout(p=0.1, inplace=False)
+        (3): Linear(in_features=128, out_features=128, bias=True)
+      )
+    )
+  )
+  (avg): AvgPool1d(kernel_size=(1,), stride=(1,), padding=(0,))
+  (drn): DimensionalityReductionNetwork(
+    (reduce1): Conv1d(256, 128, kernel_size=(1,), stride=(1,))
+    (reduce2): Conv1d(290, 128, kernel_size=(1,), stride=(1,))
+    (reduce3): Conv1d(1185, 128, kernel_size=(1,), stride=(1,))
+    (conv1): Conv1d(384, 256, kernel_size=(1,), stride=(1,))
+    (conv2): Conv1d(256, 128, kernel_size=(1,), stride=(1,))
+    (fc): Linear(in_features=16384, out_features=256, bias=True)
+    (dropout): Dropout(p=0.1, inplace=False)
+  )
+)

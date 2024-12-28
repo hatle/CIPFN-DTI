@@ -1,0 +1,15 @@
+SOLVER:
+  BATCH_SIZE: 8
+  MAX_EPOCH: 1
+  LR: 5e-5
+  SEED: 42
+
+DA:
+  TASK: False
+  USE: False
+
+DECODER:
+  BINARY: 1
+
+RESULT:
+  OUTPUT_DIR: "./result/demo"
